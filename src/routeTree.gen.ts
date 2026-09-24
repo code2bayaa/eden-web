@@ -14,6 +14,7 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as CinemaRouteImport } from './routes/cinema'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StudioDashboardRouteImport } from './routes/studio/dashboard'
 import { Route as PersonSigninRouteImport } from './routes/person/signin'
 import { Route as PersonDashboardRouteImport } from './routes/person/dashboard'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
@@ -52,6 +53,11 @@ const AboutRoute = AboutRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudioDashboardRoute = StudioDashboardRouteImport.update({
+  id: '/studio/dashboard',
+  path: '/studio/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PersonSigninRoute = PersonSigninRouteImport.update({
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/demo/store': typeof DemoStoreRoute
   '/person/dashboard': typeof PersonDashboardRoute
   '/person/signin': typeof PersonSigninRoute
+  '/studio/dashboard': typeof StudioDashboardRoute
   '/demo/guitars/$guitarId': typeof DemoGuitarsGuitarIdRoute
   '/demo/guitars/': typeof DemoGuitarsIndexRoute
   '/demo/api/ai/chat': typeof DemoApiAiChatRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/demo/store': typeof DemoStoreRoute
   '/person/dashboard': typeof PersonDashboardRoute
   '/person/signin': typeof PersonSigninRoute
+  '/studio/dashboard': typeof StudioDashboardRoute
   '/demo/guitars/$guitarId': typeof DemoGuitarsGuitarIdRoute
   '/demo/guitars': typeof DemoGuitarsIndexRoute
   '/demo/api/ai/chat': typeof DemoApiAiChatRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/demo/store': typeof DemoStoreRoute
   '/person/dashboard': typeof PersonDashboardRoute
   '/person/signin': typeof PersonSigninRoute
+  '/studio/dashboard': typeof StudioDashboardRoute
   '/demo/guitars/$guitarId': typeof DemoGuitarsGuitarIdRoute
   '/demo/guitars/': typeof DemoGuitarsIndexRoute
   '/demo/api/ai/chat': typeof DemoApiAiChatRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/person/dashboard'
     | '/person/signin'
+    | '/studio/dashboard'
     | '/demo/guitars/$guitarId'
     | '/demo/guitars/'
     | '/demo/api/ai/chat'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/person/dashboard'
     | '/person/signin'
+    | '/studio/dashboard'
     | '/demo/guitars/$guitarId'
     | '/demo/guitars'
     | '/demo/api/ai/chat'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/person/dashboard'
     | '/person/signin'
+    | '/studio/dashboard'
     | '/demo/guitars/$guitarId'
     | '/demo/guitars/'
     | '/demo/api/ai/chat'
@@ -268,6 +280,7 @@ export interface RootRouteChildren {
   DemoStoreRoute: typeof DemoStoreRoute
   PersonDashboardRoute: typeof PersonDashboardRoute
   PersonSigninRoute: typeof PersonSigninRoute
+  StudioDashboardRoute: typeof StudioDashboardRoute
   DemoGuitarsGuitarIdRoute: typeof DemoGuitarsGuitarIdRoute
   DemoGuitarsIndexRoute: typeof DemoGuitarsIndexRoute
   DemoApiAiChatRoute: typeof DemoApiAiChatRoute
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/studio/dashboard': {
+      id: '/studio/dashboard'
+      path: '/studio/dashboard'
+      fullPath: '/studio/dashboard'
+      preLoaderRoute: typeof StudioDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/person/signin': {
@@ -428,6 +448,7 @@ const rootRouteChildren: RootRouteChildren = {
   DemoStoreRoute: DemoStoreRoute,
   PersonDashboardRoute: PersonDashboardRoute,
   PersonSigninRoute: PersonSigninRoute,
+  StudioDashboardRoute: StudioDashboardRoute,
   DemoGuitarsGuitarIdRoute: DemoGuitarsGuitarIdRoute,
   DemoGuitarsIndexRoute: DemoGuitarsIndexRoute,
   DemoApiAiChatRoute: DemoApiAiChatRoute,
