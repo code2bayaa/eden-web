@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import type { Dispatch, ReactNode, SetStateAction } from 'react'
 import {toast, Toaster} from "sonner"
 import Select from 'react-select';
-import SOCKETS from "./../../middleware/sockets";
+import { joinMpesaRoom, newSocketKey } from "./../../lib/mpesaRoom";
 import { HomeLogo } from "./../../components/HomeLogo";
 import { WithdrawCard, type Payout } from "./../../components/WithdrawCard";
 import {
@@ -1089,7 +1089,7 @@ function Dashboard() {
         },0)
         //balance nets off withdrawals; older APIs only sent the wallet rows
         setWallet(typeof data.balance === "number" ? data.balance : amount)
-        setPayout({ phone: data.payout_phone || "", min: data.min_withdrawal || 100, withdrawals: data.withdrawals || [], monetized: !!data.monetized })
+        setPayout({ phone: data.payout_phone || "", min: data.min_withdrawal || 100, withdrawals: data.withdrawals || [], monetized: !!data.monetized, earnings: data.earnings || {} })
       }
 
     })()
@@ -2415,14 +2415,22 @@ function ProfileWorkspace({ routeId, wallet, setWallet, payout, setPayout, media
             </div>
           </div>
           <div className="mt-5 grid gap-3">
+            {/* rates live in movies/back-end/user/credits/earnings.js; earned = this studio's wallet rows by source */}
             {[
-              ['Ad credit', 'KES 200 for every 1,000 media viewers'],
-              ['Purchase credit', 'KES 2 for every media viewed'],
-              ['Free credit', 'KES 0 from free credits'],
-            ].map(([label, value], index) => (
-              <div key={index} className="flex items-center justify-between border-b border-white/10 pb-3 last:border-b-0 last:pb-0">
-                <span className="text-sm font-medium text-sand-100/70">{label}</span>
-                <span className="text-sm font-semibold text-white">{value}</span>
+              ['paid', 'Subscription views', 'KES 2 per view paid with bought credits'],
+              ['ad', 'Google ad credit', 'KES 200 per 1,000 ad views behind a view'],
+              ['ukoshop', 'UKOshop ad credit', 'KES 200 per 1,000 ad views behind a view'],
+              ['free', 'Free credit', 'KES 0 - signup and monthly credits'],
+            ].map(([key, label, value]) => (
+              <div key={key} className="flex items-center justify-between gap-3 border-b border-white/10 pb-3 last:border-b-0 last:pb-0">
+                <span>
+                  <span className="block text-sm font-medium text-sand-100/70">{label}</span>
+                  <span className="block text-xs text-sand-100/42">{value}</span>
+                </span>
+                <span className="text-right text-sm font-semibold text-white">
+                  KES {payout.earnings?.[key]?.amount ?? 0}
+                  <span className="block text-xs font-normal text-sand-100/42">{payout.earnings?.[key]?.views ?? 0} views</span>
+                </span>
               </div>
             ))}
           </div>
@@ -4273,10 +4281,12 @@ function FieldControl({ setLanguageForm, client, setCastForm, setDepartmentForm,
         return
       }else if(verifyLabel === "Click To Send Code"){
         setVerifyLabel("sending mpesa code...")
+        const socketKey = newSocketKey()
         const res = await fetch(`${import.meta.env.VITE_ENVIRONMENT === "development" ? import.meta.env.VITE_VERIFY_TELEPHONE : import.meta.env.VITE_VERIFY_TELEPHONE_LIVE}`,{
           method:"POST",
           body : JSON.stringify({
-            id:client
+            id:client,
+            socket_key:socketKey
           }),
           'credentials':"include",
           headers: {
@@ -4285,23 +4295,21 @@ function FieldControl({ setLanguageForm, client, setCastForm, setDepartmentForm,
           },
         });
 
-        const {status, message, error, merchant, email} = await res.json()
+        const {status, message, error, merchant, email, sockets_url} = await res.json()
 
         if(status){
           // console.log("code sent")
           toast.success(message)
           try{
-            const socketInstance = await SOCKETS.connect();
-            socketInstance.connect()
-            socketInstance.emit("user", merchant)
-            socketInstance.on("callback", async({data}:{data:any}) => {
+            //signed room "<MerchantRequestID>$<key>" - the API still checks the payment with Safaricom on confirm
+            const leave = joinMpesaRoom(sockets_url, merchant, socketKey, async(data:any) => {
               //check if payment was cancelled
               if(data.ResultCode !== 0){
                 toast.error("transaction canceled")
-                socketInstance.emit("destroy", data.MerchantRequestID);
+                leave();
                 return null
               }
-              socketInstance.emit("destroy", data.MerchantRequestID)
+              leave()
               setCode(data?.MerchantRequestID)
               const res = await fetch(`${import.meta.env.VITE_ENVIRONMENT === "development" ? import.meta.env.VITE_PAYMENT : import.meta.env.VITE_PAYMENT_LIVE}`,{
                 method:"POST",

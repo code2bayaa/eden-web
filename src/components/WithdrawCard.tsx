@@ -24,7 +24,9 @@ export type Withdrawal = {
   originator_conversation_id: string
 }
 //monetized: every monetization rule passes (worked out by the API) - withdrawals stay closed until then
-export type Payout = { phone: string; min: number; withdrawals: Withdrawal[]; monetized: boolean }
+export type Payout = { phone: string; min: number; withdrawals: Withdrawal[]; monetized: boolean; earnings?: Earnings }
+//wallet earnings by source: paid (bought credits), ad (Google ads), ukoshop (UKOshop ads)
+export type Earnings = Record<string, { views: number; credits: number; amount: number }>
 
 const WITHDRAW_URL: string =
   import.meta.env.VITE_ENVIRONMENT === 'development' ? import.meta.env.VITE_WITHDRAW : import.meta.env.VITE_WITHDRAW_LIVE

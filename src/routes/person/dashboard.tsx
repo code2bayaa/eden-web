@@ -23,6 +23,7 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { PersonAuthentication } from './signin'
+import { joinMpesaRoom, newSocketKey } from '../../lib/mpesaRoom'
 
 export const Route = createFileRoute('/person/dashboard')({
   beforeLoad: async () => {
@@ -385,11 +386,20 @@ function ProfilePanel({ person, onSaved }: { person: Person | null; onSaved: () 
 
   const startTelephoneVerification = async () => {
     try {
-      const { status, message } = await personFetch(
+      const socketKey = newSocketKey()
+      const { status, message, merchant, sockets_url } = await personFetch(
         endpoint(import.meta.env.VITE_PERSON_VERIFY_TELEPHONE, import.meta.env.VITE_PERSON_VERIFY_TELEPHONE_LIVE),
-        { method: 'POST', body: JSON.stringify({}) },
+        { method: 'POST', body: JSON.stringify({ socket_key: socketKey }) },
       )
       status ? toast.success(message) : toast.error(message)
+      if (status) {
+        //confirm as soon as the signed callback arrives - the API checks the payment with Safaricom itself
+        const leave = joinMpesaRoom(sockets_url, merchant, socketKey, (data) => {
+          leave()
+          if (data.ResultCode !== 0) return toast.error('M-PESA payment cancelled')
+          confirmTelephoneVerification()
+        })
+      }
     } catch (error) {
       console.log(error, 'error')
       toast.error('Could not start telephone verification')
@@ -397,11 +407,6 @@ function ProfilePanel({ person, onSaved }: { person: Person | null; onSaved: () 
   }
 
   const confirmTelephoneVerification = async () => {
-    if (!code) {
-      toast.error('Insert the merchant code from the M-PESA message')
-      return
-    }
-
     try {
       const { status, message } = await personFetch(
         endpoint(
@@ -529,8 +534,8 @@ function ProfilePanel({ person, onSaved }: { person: Person | null; onSaved: () 
           <div className="mt-5 space-y-3 rounded-md border border-white/10 bg-[#111317] p-4">
             <p className="text-sm font-medium text-white">Verify your telephone</p>
             <p className="text-xs text-sand-100/42">
-              We send an M-PESA prompt to {person?.telephone || 'your number'}. Paste the merchant code from the
-              message back here.
+              We send an M-PESA prompt to {person?.telephone || 'your number'}. Approve it on your phone - we
+              confirm the payment with M-PESA and verify the number. If it does not update, press Confirm.
             </p>
             <button
               type="button"
@@ -539,18 +544,12 @@ function ProfilePanel({ person, onSaved }: { person: Person | null; onSaved: () 
             >
               Send M-PESA prompt
             </button>
-            <input
-              className={inputClass}
-              placeholder="Merchant code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-            />
             <button
               type="button"
               onClick={confirmTelephoneVerification}
               className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-clay-500 px-3 text-sm font-bold text-white transition hover:bg-clay-400"
             >
-              Confirm code
+              Confirm payment
             </button>
           </div>
         )}

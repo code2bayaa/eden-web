@@ -6,7 +6,7 @@ import { Input } from "./../components/ui/input";
 import { Label } from "./../components/ui/label";
 import { Button } from "./../components/ui/button";
 import { toast, Toaster  } from "sonner";
-import SOCKETS from "../middleware/sockets";
+import { joinMpesaRoom, newSocketKey } from "../lib/mpesaRoom";
 import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/signup")({
@@ -37,6 +37,8 @@ function SignUp() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [verify_phone,setVerifyPhone] = useState<boolean>(false);
   const [verify,setVerify] = useState<boolean>(false);
+  //the M-PESA push for the phone check - the API confirms it with Safaricom before creating the studio
+  const [checkout,setCheckout] = useState<string>("");
   const [loading,setLoading] = useState<boolean>(false);
 
   const navigate = useNavigate()
@@ -44,12 +46,11 @@ function SignUp() {
     e.preventDefault();
     // console.log("submitting..")
     setLoading(true)
-    //UPDATE verify phone
-    // if(!verify_phone){
-    //   toast.error("Verify Phone Number")
-    //   setLoading(false)
-    //   return;
-    // }
+    if(!checkout){
+      toast.error("Verify your phone number with M-PESA first")
+      setLoading(false)
+      return;
+    }
     
     const result = schema.safeParse({ name, phone, password });
     if (!result.success) {
@@ -68,7 +69,8 @@ function SignUp() {
       body : JSON.stringify({
         name,
         password,
-        telephone:phone
+        telephone:phone,
+        checkout
       }),
       headers: {
         'Content-Type': 'application/json', // Indicates the body is JSON
@@ -111,6 +113,7 @@ function SignUp() {
   const verifyPhone = async() => {
     
     setVerify(true)
+    const socketKey = newSocketKey()
     if(validatePhone(phone) === false){
       toast.error("Invalid Phone Number")
       setVerify(false)
@@ -119,7 +122,8 @@ function SignUp() {
     const res = await fetch(`${import.meta.env.VITE_ENVIRONMENT === "development" ? import.meta.env.VITE_CHECK_PHONE : import.meta.env.VITE_CHECK_PHONE_LIVE}`,{
       method:"POST",
       body : JSON.stringify({
-        telephone:phone
+        telephone:phone,
+        socket_key:socketKey
       }),
       headers: {
         'Content-Type': 'application/json', // Indicates the body is JSON
@@ -127,32 +131,31 @@ function SignUp() {
       },
     });
 
-    const {status, data, message} = await res.json()
+    const {status, data, message, sockets_url} = await res.json()
 
     if(!status || data.ResponseCode !== "0"){
       toast.error(message)
       setVerify(false)
       return false
     }
+    setCheckout(data.CheckoutRequestID)
+    toast.info("Approve the M-PESA prompt on your phone, then sign up")
     //start socket io
     // console.log(data)
 
-    const socketInstance = await SOCKETS.connect();
-    // SOCKETS.socketConnect()
-    socketInstance.connect()
-    socketInstance.emit("user", data.MerchantRequestID)
-    socketInstance.on("callback", async({data}:{data:any}) => {
+    //signed room "<MerchantRequestID>$<key>" on the relay - a forged callback cannot reach it
+    const leave = joinMpesaRoom(sockets_url, data.MerchantRequestID, socketKey, async(data:any) => {
       //check if payment was cancelled
       // console.log(data)
       if(data.ResultCode !== 0){
         toast.error("transaction canceled")
-        socketInstance.emit("destroy", data.MerchantRequestID);
+        leave();
         return null
       }
       toast.success("success!")
       setVerifyPhone(true)
       setVerify(false)
-      socketInstance.emit("destroy", data.MerchantRequestID)
+      leave()
       const res = await fetch(`${import.meta.env.VITE_ENVIRONMENT === "development" ? import.meta.env.VITE_PAYMENT : import.meta.env.VITE_PAYMENT_LIVE}`,{
         method:"POST",
         credentials: "include",
