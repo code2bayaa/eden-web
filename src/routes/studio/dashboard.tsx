@@ -5,6 +5,7 @@ import {toast, Toaster} from "sonner"
 import Select from 'react-select';
 import SOCKETS from "./../../middleware/sockets";
 import { HomeLogo } from "./../../components/HomeLogo";
+import { WithdrawCard, type Payout } from "./../../components/WithdrawCard";
 import {
   BadgeDollarSign,
   CalendarDays,
@@ -945,6 +946,7 @@ function Dashboard() {
   const [miniSeries, setMiniSeries] = useState<number>(0)
   const [miniSeriesPerson, setMiniSeriesPerson] = useState<number>(0)
   const [wallet, setWallet] = useState<number>(0)
+  const [payout, setPayout] = useState<Payout>({ phone: "", min: 100, withdrawals: [], monetized: false })
   const [sections, setSections] = useState<SectionConfig[]>([
     {
       id: 'profile',
@@ -1085,7 +1087,9 @@ function Dashboard() {
           const sum = a + (b.amount || 0)
           return sum
         },0)
-        setWallet(amount)
+        //balance nets off withdrawals; older APIs only sent the wallet rows
+        setWallet(typeof data.balance === "number" ? data.balance : amount)
+        setPayout({ phone: data.payout_phone || "", min: data.min_withdrawal || 100, withdrawals: data.withdrawals || [], monetized: !!data.monetized })
       }
 
     })()
@@ -1157,6 +1161,9 @@ function Dashboard() {
               // selectedSeason,
               // setSelectedSeason,
               wallet,
+              setWallet,
+              payout,
+              setPayout,
               media,
               views,
               followers,
@@ -1182,6 +1189,9 @@ function renderWorkspace(props: {
   // selectedSeason: string
   // setSelectedSeason: Dispatch<SetStateAction<string>>,
   wallet:number,
+  setWallet: Dispatch<SetStateAction<number>>,
+  payout: Payout,
+  setPayout: Dispatch<SetStateAction<Payout>>,
   media:number,
   miniSeries:number,
   miniSeriesPerson:number,
@@ -1235,7 +1245,7 @@ function renderWorkspace(props: {
     // case 'miniSeries':
     //   return <MiniSeriesWorkspace {...baseProps} />
     case 'profile':
-      return <ProfileWorkspace routeId={props.activeRoute} wallet={props.wallet} media={props.media} views={props.views} followers={props.followers} miniSeries={props.miniSeries} miniSeriesPerson={props.miniSeriesPerson}  />
+      return <ProfileWorkspace routeId={props.activeRoute} wallet={props.wallet} setWallet={props.setWallet} payout={props.payout} setPayout={props.setPayout} media={props.media} views={props.views} followers={props.followers} miniSeries={props.miniSeries} miniSeriesPerson={props.miniSeriesPerson}  />
     default:
       return null
   }
@@ -2278,7 +2288,7 @@ function PersonWorkspace({ routeId, onRouteChange, setSections, sections }: Work
 //   )
 // }
 
-function ProfileWorkspace({ routeId, wallet, media, views, followers, miniSeries, miniSeriesPerson  }: { routeId: string, wallet: number, media:number, views:number, followers:number, miniSeries:number, miniSeriesPerson:number }) {
+function ProfileWorkspace({ routeId, wallet, setWallet, payout, setPayout, media, views, followers, miniSeries, miniSeriesPerson  }: { routeId: string, wallet: number, setWallet: Dispatch<SetStateAction<number>>, payout: Payout, setPayout: Dispatch<SetStateAction<Payout>>, media:number, views:number, followers:number, miniSeries:number, miniSeriesPerson:number }) {
   const [name, setName] = useState(null)
   const [image, setImage] = useState<null | String>(null)
 
@@ -2457,8 +2467,8 @@ function ProfileWorkspace({ routeId, wallet, media, views, followers, miniSeries
           ) : null}
           <p className="mt-4 text-xs text-sand-100/42">
             {monetized
-              ? 'This studio qualifies for monetization. Credit accrues on every view.'
-              : 'Every rule above has to pass before credit accrues on a view.'}
+              ? 'Monetization is on. Credit accrues on every view and the wallet can be withdrawn to M-PESA.'
+              : 'Monetization turns on by itself once every rule above passes - there is no deposit or activation fee. Until then credit does not accrue and the wallet cannot be withdrawn.'}
           </p>
         </div>
 
@@ -2467,6 +2477,7 @@ function ProfileWorkspace({ routeId, wallet, media, views, followers, miniSeries
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-clay-400">Studio packages</p>
               <h2 className="text-lg font-semibold text-white">Available creator plans</h2>
+              <p className="mt-1 text-xs text-sand-100/42">Optional promotion. Monetization never needs a package.</p>
             </div>
             {/* <button type="button" className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-white/10 px-3 text-sm text-white hover:bg-white/[0.06]">
               <Plus className="size-4" />
@@ -2513,19 +2524,7 @@ function ProfileWorkspace({ routeId, wallet, media, views, followers, miniSeries
         </div>
       </div>
 
-      <div className="rounded-lg border border-teal-300/20 bg-teal-300/10 p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-teal-100/70">Wallet account</p>
-            <p className="mt-2 text-3xl font-semibold text-white">KES {wallet}</p>
-          </div>
-          <Wallet className="size-8 text-teal-200" />
-        </div>
-        <button type="button" className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-white px-4 text-sm font-bold text-[#111317] hover:bg-sand-100">
-          <BadgeDollarSign className="size-4" />
-          Withdraw
-        </button>
-      </div>
+      <WithdrawCard wallet={wallet} setWallet={setWallet} payout={payout} setPayout={setPayout} />
     </section>
   )
 }
