@@ -1261,7 +1261,7 @@ function StudioSidebar({
   sections: SectionConfig[]
 }) {
   return (
-    <aside className="border-b border-white/10 bg-[#111317] px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:border-b-0 lg:border-r lg:px-4">
+    <aside className="border-b border-white/10 bg-[#111317] px-4 py-4 lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-72 lg:shrink-0 lg:flex-col lg:border-b-0 lg:border-r lg:px-4">
       <HomeLogo layout="inline" tone="studio" className="mb-3" />
 
       <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3">
@@ -1272,7 +1272,8 @@ function StudioSidebar({
         </div>
       </div>
 
-      <nav className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-1">
+      {/* sidebar is pinned to the viewport on lg, so the tab list scrolls on its own to reach the last button */}
+      <nav className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:min-h-0 lg:flex-1 lg:auto-rows-min lg:grid-cols-1 lg:overflow-y-auto lg:pb-4">
         {sections.map((section,index) => {
           const Icon = section.icon
           const isActive = section.id === activeSection
