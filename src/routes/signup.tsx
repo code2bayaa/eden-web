@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { set, z } from "zod";
+import { z } from "zod";
 import { AuthShell } from "./../components/AuthShell";
 import { Input } from "./../components/ui/input";
 import { Label } from "./../components/ui/label";
@@ -35,7 +35,7 @@ function SignUp() {
   const [phone, setPhone] = useState<String | any>("");
   const [password, setPassword] = useState<String | any>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [verify_phone,setVerifyPhone] = useState<boolean>(false);
+  const [, setVerifyPhone] = useState<boolean>(false);
   const [verify,setVerify] = useState<boolean>(false);
   //the M-PESA push for the phone check - the API confirms it with Safaricom before creating the studio
   const [checkout,setCheckout] = useState<string>("");
@@ -156,7 +156,7 @@ function SignUp() {
       setVerifyPhone(true)
       setVerify(false)
       leave()
-      const res = await fetch(`${import.meta.env.VITE_ENVIRONMENT === "development" ? import.meta.env.VITE_PAYMENT : import.meta.env.VITE_PAYMENT_LIVE}`,{
+      await fetch(`${import.meta.env.VITE_ENVIRONMENT === "development" ? import.meta.env.VITE_PAYMENT : import.meta.env.VITE_PAYMENT_LIVE}`,{
         method:"POST",
         credentials: "include",
         body : JSON.stringify({

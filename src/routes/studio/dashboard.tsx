@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useMemo, useState, useEffect, useRef } from 'react'
 import type { Dispatch, ReactNode, SetStateAction } from 'react'
 import {toast, Toaster} from "sonner"
@@ -37,9 +37,6 @@ import {
   Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { fieldNameFromStoreName } from '@apollo/client/cache';
-import { set, string } from 'zod';
-import { el } from 'zod/v4/locales';
 
 export const Route = createFileRoute('/studio/dashboard')({
   beforeLoad: async () => {
@@ -290,7 +287,7 @@ const tvOptions = async() => {
       })
     }); 
 
-    const {status, message, data} = await res.json()
+    const {status, data} = await res.json()
 
     if(status){
       return data.map(({name,tv_id}:{name:string,tv_id:number}) => ({label:name, value:tv_id}))
@@ -317,7 +314,7 @@ const seasonOptions = async(tvID:number) => {
       })
     }); 
 
-    const {status, message, data} = await res.json()
+    const {status, data} = await res.json()
 
     if(status){
       return data.map(({season_number,season_id}:{season_number:number,season_id:number}) => ({label:season_number, value:season_id}))
@@ -351,12 +348,12 @@ const seasonOptions = async(tvID:number) => {
 //   '/acDJi0yEAMy82wmngFrJ0KjVRm2.jpg',
 // ]
 
-const personOptions = [
-  '38941 - Jim Sturgess',
-  '78201 - Wanjiru K.',
-  '81044 - Musa Otieno',
-  '115890 - Amina Barasa',
-]
+// const personOptions = [
+//   '38941 - Jim Sturgess',
+//   '78201 - Wanjiru K.',
+//   '81044 - Musa Otieno',
+//   '115890 - Amina Barasa',
+// ]
 
 // const genderOptions = [
 //   {
@@ -432,7 +429,7 @@ const movieRows = async(page:number) => {
     })
   }); 
 
-  const {status, message, data, total} = await res.json()
+  const {status, data, total} = await res.json()
 
   // console.log(status,"message",message)
 
@@ -473,7 +470,7 @@ const tvRows = async(page:number) => {
     })
   }); 
 
-  const {status, message, data, total} = await res.json()
+  const {status, data, total} = await res.json()
 
   if(status){
     return data.map((row:any) => ({
@@ -514,7 +511,7 @@ const seasonRows = async(tvID:number,page:number) => {
     })
   }); 
 
-  const {status, message, data, total} = await res.json()
+  const {status, data, total} = await res.json()
 
   // console.log(status,"status",data,"data")
   if(status){
@@ -546,7 +543,7 @@ const episodeRows = async(seasonID:any,page:number) => {
     })
   }); 
 
-  const {status, message, data, total} = await res.json()
+  const {status, data, total} = await res.json()
   // console.log(status,"status",data,"data",message,"message")
 
   if(status){
@@ -577,7 +574,7 @@ const personRows = async(page:number) => {
     })
   }); 
 
-  const {status, message, data, total} = await res.json()
+  const {status, data, total} = await res.json()
   if(status){
     return data.map((row:any) => ({
       ...row,
@@ -1075,7 +1072,7 @@ function Dashboard() {
         },
       }); 
 
-      const {status, message, data} = await res.json()
+      const {status, data} = await res.json()
       // console.log(message,"message")
       if(status){
         setMedia(data.media)
@@ -1873,7 +1870,7 @@ function GenreWorkspace() {
         },
       }); 
 
-      const {status, message, data} = await res.json()
+      const {status, data} = await res.json()
       if(status){
         setGenreFields(data)
       }
@@ -1919,7 +1916,7 @@ function DepartmentWorkspace() {
         },
       }); 
 
-      const {status, message, data} = await res.json()
+      const {status, data} = await res.json()
       // console.log(departmentFields,"department fields")
       if(status){
         setDepartmentFields(data)
@@ -1965,7 +1962,7 @@ function LanguageWorkspace(){
         },
       }); 
 
-      const {status, message, data} = await res.json()
+      const {status, data} = await res.json()
       if(status){
         setLanguageFields(data)
       }
@@ -2313,7 +2310,7 @@ function ProfileWorkspace({ routeId, wallet, setWallet, payout, setPayout, media
         },
       )
 
-      const { status, data, message } = await res.json()
+      const { status, data } = await res.json()
       // console.log(message,"message")
 
       if(status){
@@ -2420,7 +2417,7 @@ function ProfileWorkspace({ routeId, wallet, setWallet, payout, setPayout, media
               ['paid', 'Subscription views', 'KES 2 per view paid with bought credits'],
               ['ad', 'Google ad credit', 'KES 200 per 1,000 ad views behind a view'],
               ['ukoshop', 'UKOshop ad credit', 'KES 200 per 1,000 ad views behind a view'],
-              ['free', 'Free credit', 'KES 0 - signup and monthly credits'],
+              ['free', 'Free views', 'KES 0 - signup / monthly credits and signed-out viewers; counted, not paid'],
             ].map(([key, label, value]) => (
               <div key={key} className="flex items-center justify-between gap-3 border-b border-white/10 pb-3 last:border-b-0 last:pb-0">
                 <span>
@@ -2628,7 +2625,7 @@ function SelectControl({
           })
         }); 
 
-        const {status, message, data} = await res.json() 
+        const {status, data} = await res.json() 
         // console.log(status,data)
         if(status && data && data.length > 0){
           const movieData = data.map(({data,id}:{data:any,id:number}) => ({tv_id:id,...JSON.parse(data)})).map(({name,tv_id}:{name:string,tv_id:number}) => ({value:tv_id,label:name}))
@@ -2657,7 +2654,7 @@ function SelectControl({
           })
         }); 
 
-        const {status, message, data} = await res.json() 
+        const {status, data} = await res.json() 
         if(status && data && data.length > 0){
           const seasonData = data.map(({data,id}:{data:any,id:number}) => ({season_id:id,...JSON.parse(data)})).map(({name,season_id}:{name:string,season_id:number}) => ({value:season_id,label:name}))
           setOptions((prev:any) => {
@@ -4602,7 +4599,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             },
           }); 
 
-          const {status, message, data} = await res.json()
+          const {status, data} = await res.json()
 
           // console.log(status,"message",message)
           if(status){
@@ -4628,7 +4625,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             },
           }); 
 
-          const {status, message, data} = await res.json()
+          const {status, data} = await res.json()
 
           if(status){
             const languageData = data.map(({english_name}:{english_name:string}) => ({value:english_name,label:english_name}))
@@ -4646,7 +4643,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             },
           }); 
 
-          const {status, message, data} = await res.json()
+          const {status, data} = await res.json()
 
           if(status){
             const regionData = data.map(({english_name}:{english_name:string}) => ({value:english_name,label:english_name}))
@@ -4667,7 +4664,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             })
           }); 
 
-          const {status, message, data} = await res.json()
+          const {status, data} = await res.json()
 
           if(status){
             const titleData = data.map(({title,movie_id}:{title:string,movie_id:number}) => ({value:movie_id,label:title}))
@@ -4685,7 +4682,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             },
           }); 
 
-          const {status, message, data} = await res.json()
+          const {status, data} = await res.json()
           // console.log(status,"status",message,"message",data)
 
           if(status){
@@ -4710,7 +4707,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             })
           }); 
 
-          const {status, message, data} = await res.json()
+          const {status, data} = await res.json()
           // console.log(status,"status",data)
 
           if(status){
@@ -4733,7 +4730,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             })
           }); 
 
-          const {status, message, data} = await res.json()
+          const {status, data} = await res.json()
 
           if(status){
             const titleData = data.map(({name,episode_id}:{name:string,episode_id:number}) => ({value:episode_id,label:name}))
@@ -4755,7 +4752,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             })
           }); 
 
-          const {status, message, data} = await res.json()
+          const {status, data} = await res.json()
           // console.log(status,"status",data)
 
           if(status){
@@ -4765,19 +4762,16 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             setOptions(null)
           }             
         }else if(field.title === "person"){
+          //GET /people - persons created by any eden studio (POST /people is this studio's own paged list)
           const res = await fetch(`${import.meta.env.VITE_ENVIRONMENT === "development" ? import.meta.env.VITE_FETCH_PEOPLE: import.meta.env.VITE_FETCH_PEOPLE_LIVE}`,{
-            method:"POST",
+            method:"GET",
             credentials: "include",
             headers: {
-              'Content-Type': 'application/json', // Indicates the body is JSON
               'x-api-key':import.meta.env.VITE_API_KEY
-            },
-            body:JSON.stringify({
-              page:1
-            })
-          }); 
+            }
+          });
 
-          const {status, message, data} = await res.json()
+          const {status, data} = await res.json()
 
           if(status){
             // console.log(data,"follow person data")
@@ -4813,7 +4807,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             })
           }); 
 
-          const {status, message, data} = await res.json()
+          const {status, data} = await res.json()
           // console.log(status,"status",data)
 
           if(status){
@@ -4861,7 +4855,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             })
           }); 
 
-          const {status, message, data} = await res.json() 
+          const {status, data} = await res.json() 
           if(status && data && data.length > 0){
             const movieData = data.map(({data,id}:{data:any,id:number}) => ({season_id:id,...JSON.parse(data)})).map(({name,season_id}:{name:string,season_id:number}) => ({value:season_id,label:name}))
             setOptions((prev:any) => {
@@ -4891,7 +4885,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             })
           }); 
 
-          const {status, message, data} = await res.json() 
+          const {status, data} = await res.json() 
           if(status && data && data.length > 0){
             const movieData = data.map(({data,id}:{data:any,id:number}) => ({episode_id:id,...JSON.parse(data)})).map(({name,episode_id}:{name:string,episode_id:number}) => ({value:episode_id,label:name}))
             setOptions((prev:any) => {
@@ -4909,7 +4903,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
           return
 
         async function runSearch(){
-          const res = await fetch(`${import.meta.env.VITE_ENVIRONMENT === "development" ? import.meta.env.VITE_SEARCH_PEOPLE: import.meta.env.VITE_SEARCH_PEOPLE_LIVE}`,{
+          const res = await fetch(`${import.meta.env.VITE_ENVIRONMENT === "development" ? import.meta.env.VITE_PEOPLE_SEARCH: import.meta.env.VITE_FETCH_PEOPLE_SEARCH_LIVE}`,{
             method:"POST",
             credentials: "include",
             headers: {
@@ -4921,16 +4915,18 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             })
           }); 
 
-          const {status, message, data} = await res.json() 
+          const {status, data} = await res.json() 
           // console.log(message,"search message",data)
           if(status && data && data.length > 0){
             // console.log("enteredt")
-            const peopleData = data.map(({data}:{data:string}) => JSON.parse(data)).map(({id,name,original_name}:{id:number,name:string,original_name:string}) => ({value:id,label:name + " | " + original_name}))
+            //value is the person row id - stars.person_id joins on person.id, not the id inside data
+            const peopleData = data.map(({data,id}:{data:string,id:number}) => ({person_id:id,...JSON.parse(data)})).map(({person_id,name,original_name}:{person_id:number,name:string,original_name:string}) => ({value:person_id,label:name + " | " + original_name}))
             // console.log(peopleData, "people data")
             setOptions((prev:any) => {
+              const seen = new Set((prev || []).map((option:any) => option.value))
               return [
-                ...prev,
-                ...peopleData
+                ...(prev || []),
+                ...peopleData.filter((option:any) => !seen.has(option.value))
               ]
             })
           }
@@ -4954,7 +4950,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             })
           }); 
 
-          const {status, message, data} = await res.json() 
+          const {status, data} = await res.json() 
           if(status && data && data.length > 0){
             const movieData = data.map(({data,id}:{data:any,id:number}) => ({movie_id:id,...JSON.parse(data)})).map(({title,movie_id}:{title:string,movie_id:number}) => ({value:movie_id,label:title}))
             setOptions((prev:any) => {
@@ -4984,7 +4980,7 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
             })
           }); 
 
-          const {status, message, data} = await res.json() 
+          const {status, data} = await res.json() 
           // console.log(status,data)
           if(status && data && data.length > 0){
             const movieData = data.map(({data,id}:{data:any,id:number}) => ({tv_id:id,...JSON.parse(data)})).map(({name,tv_id}:{name:string,tv_id:number}) => ({value:tv_id,label:name}))
@@ -5131,8 +5127,6 @@ function renderFieldInput(setLanguageForm:React.Dispatch<React.SetStateAction<La
 function ActionPanel({
   title,
   icon: Icon,
-  body,
-  actionLabel,
   client
 }: {
   title: string
@@ -5163,7 +5157,7 @@ function ActionPanel({
       })
     }); 
 
-    const {status, message, data, error} = await res.json() 
+    const {status, data} = await res.json() 
     console.log(status,"status",data)
     if(status){
       setPeople(data)
@@ -5658,18 +5652,18 @@ function QualificationRow({ label, value, complete }: { label: string; value: st
   )
 }
 
-function createRows(seedRows: MediaRow[], type: string) {
-  return Array.from({ length: 20 }, (_, index) => {
-    const seed = seedRows[index % seedRows.length]
-    const pageNumber = index + 1
-    const suffix = pageNumber <= seedRows.length ? '' : ` ${pageNumber}`
-
-    return {
-      ...seed,
-      id: seed.id + index,
-      title: `${seed.title}${suffix}`,
-      share: seed.share.replace(String(seed.id), String(seed.id + index)),
-      badge: seed.badge || type,
-    }
-  })
-}
+// function createRows(seedRows: MediaRow[], type: string) {
+//   return Array.from({ length: 20 }, (_, index) => {
+//     const seed = seedRows[index % seedRows.length]
+//     const pageNumber = index + 1
+//     const suffix = pageNumber <= seedRows.length ? '' : ` ${pageNumber}`
+//
+//     return {
+//       ...seed,
+//       id: seed.id + index,
+//       title: `${seed.title}${suffix}`,
+//       share: seed.share.replace(String(seed.id), String(seed.id + index)),
+//       badge: seed.badge || type,
+//     }
+//   })
+// }

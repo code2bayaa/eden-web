@@ -1,7 +1,6 @@
 import { gql } from '@apollo/client'
 import { useReadQuery } from '@apollo/client/react'
 import { createFileRoute } from '@tanstack/react-router'
-import React from 'react'
 
 // Example GraphQL query - replace with your own schema
 const EXAMPLE_QUERY: any = gql`

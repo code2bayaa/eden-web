@@ -92,7 +92,6 @@ import { Play } from "lucide-react";
 import { SiteNav } from "../components/SiteNav";
 import { Poster } from "../components/Poster";
 import { endpoint, type Film, type Studio } from "../lib/eden";
-import { set } from 'zod';
 
 // export const Route = createFileRoute("/")({
 //   component: () => App,

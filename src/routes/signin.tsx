@@ -6,6 +6,7 @@ import { Input } from "./../components/ui/input";
 import { Label } from "./../components/ui/label";
 import { Button } from "./../components/ui/button";
 import { toast, Toaster } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 import { useNavigate, redirect  } from "@tanstack/react-router";
 export const Route = createFileRoute("/signin")({
   beforeLoad: async () => {
@@ -34,7 +35,7 @@ const schema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(/^254\d{9}$/, "Phone must be in the format +254xxxxxxxxx"),
+    .regex(/^254\d{9}$/, "phone_format"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 async function Authentication() {
@@ -49,13 +50,13 @@ async function Authentication() {
 
   const {
   status,
-  message
   } = await res.json();
   return status;
 }
 function SignIn() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -122,18 +123,33 @@ function SignIn() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
-          {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+          {errors.phone && (
+            <p className="text-xs text-destructive">
+              Phone must start with <strong className="rounded bg-destructive/15 px-1 font-semibold">254</strong> (no +), e.g. 254712345678
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
         </div>
 

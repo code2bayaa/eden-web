@@ -43,7 +43,7 @@ export const Route = createFileRoute('/demo/api/ai/chat')({
           const { messages } = body
 
           // Determine the best available provider
-          let provider: string = 'ollama'
+          let provider: 'anthropic' | 'openai' | 'gemini' | 'ollama' = 'ollama'
           let model: string = 'mistral:7b'
           if (process.env.ANTHROPIC_API_KEY) {
             provider = 'anthropic'
